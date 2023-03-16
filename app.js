@@ -9,7 +9,10 @@ const { DB_HOST } = process.env;
 mongoose
   .connect(DB_HOST)
   .then(() => console.log("Connected"))
-  .catch((e) => console.log(e));
+  .catch((e) => {
+    console.log(e);
+    process.exit(1);
+  });
 
 const { contactsRouter } = require("./routes/api");
 
