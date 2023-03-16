@@ -1,20 +1,17 @@
+const { createError } = require("../helpers");
 const { Contact } = require("../models");
-const { NotFound } = require("http-errors");
 
 const listContacts = async (req, res) => {
-  const contacts = await Contact.find({});
+  const { id } = req.user;
+  const contacts = await Contact.find({ owner: id }, "-owner");
   res.json(contacts);
 };
 
 const getContactById = async (req, res) => {
   const { contactId } = req.params;
-  const contact = await Contact.findById(contactId);
+  const contact = await Contact.findById(contactId, "-owner");
   if (!contact) {
-    const err = new Error();
-    err.status = 404;
-    err.message = `There is no contact with id=${contactId}`;
-    res.status(404).send(err.message);
-    return err;
+    throw createError(404, `There is no contact with id=${contactId}`);
   }
   res.json(contact);
 };
@@ -23,17 +20,16 @@ const removeContact = async (req, res) => {
   const { contactId } = req.params;
   const contact = await Contact.findByIdAndRemove(contactId);
   if (!contact) {
-    const err = new Error();
-    err.status = 404;
-    err.message = `There is no contact with id=${contactId}`;
-    res.status(404).send(err.message);
-    return err;
+    throw createError(404, `There is no contact with id=${contactId}`);
   }
   res.json(contact);
 };
 
 const addContact = async (req, res) => {
-  const contact = await Contact.create(req.body);
+  const { id } = req.user;
+  const newContact = req.body;
+  newContact.owner = id;
+  const contact = await Contact.create(newContact);
   res.status(201).json(contact);
 };
 
@@ -43,11 +39,7 @@ const updateContact = async (req, res) => {
     new: true,
   });
   if (!contact) {
-    const err = new Error();
-    err.status = 404;
-    err.message = `There is no contact with id=${contactId}`;
-    res.status(404).send(err.message);
-    return err;
+    throw createError(404, `There is no contact with id=${contactId}`);
   }
   res.json(contact);
 };
